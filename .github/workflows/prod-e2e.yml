@@ -1,0 +1,48 @@
+name: Live deployment E2E
+
+# Runs the end-to-end suite against the deployed app (Vercel + Render).
+# Full flow places test orders and does admin CRUD, then cleans up.
+# Required secrets:   PROD_ADMIN_EMAIL, PROD_ADMIN_PASSWORD
+# Optional variables: PROD_WEB_URL, PROD_API_URL (default to the live URLs)
+on:
+  workflow_dispatch:
+    inputs:
+      read_only:
+        description: Only run read-only checks (no writes to production)
+        type: boolean
+        default: false
+  schedule:
+    - cron: "30 3 * * *" # daily 09:00 IST
+
+concurrency:
+  group: prod-e2e
+  cancel-in-progress: false
+
+jobs:
+  live-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+      - run: npm ci
+        working-directory: e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+      - name: Run live E2E
+        run: ./run-prod-e2e.sh ${{ inputs.read_only && '--read-only' || '' }}
+        env:
+          PROD_WEB_URL: ${{ vars.PROD_WEB_URL }}
+          PROD_API_URL: ${{ vars.PROD_API_URL }}
+          PROD_ADMIN_EMAIL: ${{ secrets.PROD_ADMIN_EMAIL }}
+          PROD_ADMIN_PASSWORD: ${{ secrets.PROD_ADMIN_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-prod
+          path: e2e/playwright-report-prod
+          retention-days: 7

@@ -10,7 +10,10 @@
     "test:ui": "playwright test --project=ui",
     "test:headed": "playwright test --project=ui --headed",
     "report": "playwright show-report",
-    "install:browsers": "playwright install chromium"
+    "install:browsers": "playwright install chromium",
+    "test:prod": "playwright test -c playwright.prod.config.ts",
+    "test:prod:readonly": "E2E_READ_ONLY=1 playwright test -c playwright.prod.config.ts --grep-invert @write",
+    "report:prod": "playwright show-report playwright-report-prod"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",

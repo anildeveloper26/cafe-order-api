@@ -175,6 +175,36 @@ cd e2e && npm run report             # HTML report with traces, screenshots and 
 | `tests/api/auth` | JWT login, case-insensitive email, wrong password, malformed body, invalid tokens |
 | `tests/ui/*` | QR welcome pop-up, URL-persisted filters, cart and checkout, live order tracking, admin login redirect, menu CRUD, live orders board, QR page, 404 |
 
+### Testing the live deployment
+
+`./run-prod-e2e.sh` runs a separate Playwright suite (22 tests) against the **deployed** app, by default https://cafe-order-web.vercel.app and this Render API. It catches deployment problems the local suite can't, such as CORS, wrong `VITE_*` env, SPA rewrites, cold starts and Socket.io connectivity.
+
+```bash
+./run-prod-e2e.sh --read-only        # 14 checks, never writes to production
+./run-prod-e2e.sh                    # full flow: also places test orders + admin CRUD, then cleans up
+cd e2e && npm run report:prod        # HTML report
+```
+
+- **Read-only checks:**
+  - health and DB connection, Swagger docs
+  - menu search, filter and sort; error responses; CORS allow and block; Socket.io handshake; security headers
+  - QR pop-up, URL-persisted filters, deep links and 404
+  - API URL baked into the build, cart totals, checkout validation, no console errors
+- **Full flow (`@write`):**
+  - admin login
+  - menu item and order lifecycle with server-side pricing
+  - a customer orders in the browser and sees status changes live
+  - "My orders" lookup
+  - admin dashboard and orders board
+  - menu create → visible to customers → hide → delete
+- **Config:** set `PROD_ADMIN_EMAIL` / `PROD_ADMIN_PASSWORD` (required for the full flow) and optionally `PROD_WEB_URL` / `PROD_API_URL`, either in your shell or in `e2e/.env.prod` (git-ignored; see `e2e/.env.prod.example`).
+- **Test data:**
+  - Orders use the customer name `E2E Smoke Test` and phone `9000000000`. Menu items are named `[E2E] …`.
+  - After every run, and again before the next one, all test orders are set to `cancelled` (excluded from revenue) and all `[E2E]` items are deleted.
+  - Real customer orders are never touched.
+- **Logins:** a run logs in about 3 times. The API allows 10 logins per 15 minutes per IP, so don't run it more than about 3 times in a row.
+- **CI:** `.github/workflows/prod-e2e.yml` runs daily and on demand (Actions → Live deployment E2E → Run workflow, with an optional read-only toggle). Add the repository secrets `PROD_ADMIN_EMAIL` and `PROD_ADMIN_PASSWORD`.
+
 CI (`.github/workflows/ci.yml`) type-checks and builds on every push, then runs the full E2E suite against the latest frontend. If it fails, the report is uploaded as an artifact.
 
 ## Scripts
@@ -185,7 +215,8 @@ CI (`.github/workflows/ci.yml`) type-checks and builds on every push, then runs 
 | `npm run build` / `npm start` | Compile TypeScript / run the compiled server |
 | `npm run seed` / `npm run seed:prod` | Seed menu + admin (dev / compiled) |
 | `npm run typecheck` | Type-check |
-| `./run-e2e.sh` | End-to-end tests |
+| `./run-e2e.sh` | End-to-end tests (local, in-memory DB) |
+| `./run-prod-e2e.sh [--read-only]` | End-to-end tests against the live deployment |
 
 ## Screenshots
 

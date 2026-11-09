@@ -18,7 +18,7 @@ export interface Order {
   customer: { name: string; phone: string };
 }
 
-const url = (p: string) => `${API_URL}${p}`;
+const url = (p: string) => `${process.env.E2E_API_URL ?? API_URL}${p}`;
 
 let phoneSeq = 0;
 /** Unique valid Indian mobile number per call (starts with 9). */
@@ -48,8 +48,13 @@ export async function createMenuItem(request: APIRequestContext, token: string, 
   return (await res.json()).data as MenuItem;
 }
 
-export async function placeOrder(request: APIRequestContext, items: { menuItem: string; quantity: number }[], phone = uniquePhone()) {
-  const res = await request.post(url('/orders'), { data: { customer: { name: 'E2E Customer', phone }, tableNumber: 5, items } });
+export async function placeOrder(
+  request: APIRequestContext,
+  items: { menuItem: string; quantity: number }[],
+  phone = uniquePhone(),
+  name = 'E2E Customer',
+) {
+  const res = await request.post(url('/orders'), { data: { customer: { name, phone }, tableNumber: 5, items } });
   expect(res.status()).toBe(201);
   return (await res.json()).data as Order;
 }
