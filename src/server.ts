@@ -3,6 +3,7 @@ import { createApp } from './app';
 import { connectDB, disconnectDB } from './config/db';
 import { env } from './config/env';
 import { initSocket } from './socket';
+import { startKeepAliveJob } from './jobs/keepAlive';
 
 async function main() {
   await connectDB();
@@ -11,6 +12,7 @@ async function main() {
 
   server.listen(env.port, () => {
     console.log(`API listening on http://localhost:${env.port}  (docs: /api/docs)`);
+    startKeepAliveJob();
   });
 
   const shutdown = (signal: string) => {
