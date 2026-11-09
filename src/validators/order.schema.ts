@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ORDER_STATUSES } from '../models/Order';
-import { objectId } from './common';
+import { ORDER_DEFAULT_LIMIT, ORDER_STATUSES } from '../constants/orders';
+import { idParams, objectId } from './common';
 
 export const phoneRegex = /^[6-9]\d{9}$/;
 
@@ -28,12 +28,15 @@ export const listOrdersSchema = z.object({
     phone: z.string().trim().regex(phoneRegex, 'Enter a valid 10-digit mobile number').optional(),
     status: z.enum(ORDER_STATUSES).optional(),
     page: z.coerce.number().int().min(1).optional().default(1),
-    limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+    limit: z.coerce.number().int().min(1).max(100).optional().default(ORDER_DEFAULT_LIMIT),
   }),
 });
 
 export const updateStatusSchema = z.object({
+  params: idParams,
   body: z.object({ status: z.enum(ORDER_STATUSES) }),
 });
+
+export const orderIdSchema = z.object({ params: idParams });
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>['body'];

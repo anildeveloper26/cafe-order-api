@@ -1,4 +1,4 @@
-import type { RequestHandler } from 'express';
+import type { Request, RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { ApiError } from '../utils/ApiError';
@@ -9,13 +9,21 @@ export interface AdminTokenPayload {
   role: 'admin';
 }
 
-export const requireAdmin: RequestHandler = (req, _res, next) => {
+export type AuthedRequest = Request & { admin?: AdminTokenPayload };
+
+function readAdminToken(req: Request): AdminTokenPayload | null {
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) return next(ApiError.unauthorized('Missing bearer token'));
+  if (!header?.startsWith('Bearer ')) return null;
+  const payload = jwt.verify(header.slice(7), env.jwtSecret) as AdminTokenPayload;
+  return payload.role === 'admin' ? payload : null;
+}
+
+export const requireAdmin: RequestHandler = (req, _res, next) => {
+  if (!req.headers.authorization?.startsWith('Bearer ')) return next(ApiError.unauthorized('Missing bearer token'));
   try {
-    const payload = jwt.verify(header.slice(7), env.jwtSecret) as AdminTokenPayload;
-    if (payload.role !== 'admin') return next(ApiError.unauthorized('Not an admin'));
-    (req as typeof req & { admin?: AdminTokenPayload }).admin = payload;
+    const admin = readAdminToken(req);
+    if (!admin) return next(ApiError.unauthorized('Not an admin'));
+    (req as AuthedRequest).admin = admin;
     next();
   } catch {
     next(ApiError.unauthorized('Invalid or expired token'));
@@ -24,14 +32,11 @@ export const requireAdmin: RequestHandler = (req, _res, next) => {
 
 /** Attaches req.admin when a valid admin token is present; never rejects. */
 export const optionalAdmin: RequestHandler = (req, _res, next) => {
-  const header = req.headers.authorization;
-  if (header?.startsWith('Bearer ')) {
-    try {
-      const payload = jwt.verify(header.slice(7), env.jwtSecret) as AdminTokenPayload;
-      if (payload.role === 'admin') (req as typeof req & { admin?: AdminTokenPayload }).admin = payload;
-    } catch {
-      /* ignore invalid token on optional routes */
-    }
+  try {
+    const admin = readAdminToken(req);
+    if (admin) (req as AuthedRequest).admin = admin;
+  } catch {
+    /* invalid token on an optional route is treated as anonymous */
   }
   next();
 };

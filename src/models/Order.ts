@@ -1,7 +1,8 @@
 import { Schema, model, type InferSchemaType } from 'mongoose';
 
-export const ORDER_STATUSES = ['pending', 'preparing', 'ready', 'completed', 'cancelled'] as const;
-export type OrderStatus = (typeof ORDER_STATUSES)[number];
+import { ORDER_STATUSES } from '../constants/orders';
+
+export { ORDER_STATUSES, type OrderStatus } from '../constants/orders';
 
 const orderItemSchema = new Schema(
   {

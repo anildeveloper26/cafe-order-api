@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
+import { corsOptions } from './config/cors';
 import routes from './routes';
 import { swaggerSpec } from './docs/swagger';
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -13,15 +14,7 @@ export function createApp() {
 
   app.set('trust proxy', 1); // Render sits behind a proxy; needed for rate limiting by IP.
   app.use(helmet({ contentSecurityPolicy: false })); // CSP off so Swagger UI assets load.
-  app.use(
-    cors({
-      origin(origin, cb) {
-        if (!origin || env.corsOrigins.includes('*') || env.corsOrigins.includes(origin)) return cb(null, true);
-        cb(new Error(`Origin ${origin} not allowed by CORS`));
-      },
-      credentials: true,
-    }),
-  );
+  app.use(cors(corsOptions));
   app.use(express.json({ limit: '100kb' }));
   if (env.nodeEnv !== 'test') app.use(morgan(env.isProd ? 'combined' : 'dev'));
 

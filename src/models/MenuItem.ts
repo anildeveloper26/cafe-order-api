@@ -1,7 +1,8 @@
 import { Schema, model, type InferSchemaType, type HydratedDocument } from 'mongoose';
 
-export const CATEGORIES = ['coffee', 'tea', 'snacks', 'desserts', 'meals', 'beverages'] as const;
-export type Category = (typeof CATEGORIES)[number];
+import { CATEGORIES } from '../constants/menu';
+
+export { CATEGORIES, type Category } from '../constants/menu';
 
 const menuItemSchema = new Schema(
   {
