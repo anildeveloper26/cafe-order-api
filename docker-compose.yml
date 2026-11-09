@@ -1,0 +1,51 @@
+# One command to run the whole app locally (MongoDB + API + web):
+#   docker compose up --build
+# Web: http://localhost:5173   API: http://localhost:5000/api   Docs: http://localhost:5000/api/docs
+# The web image builds straight from the frontend GitHub repo. To build from a local clone instead:
+#   WEB_CONTEXT=../cafe-order-web docker compose up --build
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongo:27017/cafe
+      CORS_ORIGIN: http://localhost:5173
+      JWT_SECRET: ${JWT_SECRET:-docker-local-secret-change-me}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@cafe.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+    # Seed menu + admin on first start (skips if the menu already exists), then start the API.
+    command: sh -c "node dist/seed/seed.js && node dist/server.js"
+    ports:
+      - "5000:5000"
+
+  web:
+    build:
+      context: ${WEB_CONTEXT:-https://github.com/anildeveloper26/cafe-order-web.git#main}
+      args:
+        VITE_API_URL: http://localhost:5000/api
+        VITE_SOCKET_URL: http://localhost:5000
+        VITE_PUBLIC_URL: http://localhost:5173
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
+volumes:
+  mongo-data:
