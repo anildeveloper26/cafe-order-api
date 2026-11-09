@@ -34,7 +34,14 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: e2e
       - name: Run live E2E
-        run: ./run-prod-e2e.sh ${{ inputs.read_only && '--read-only' || '' }}
+        # Falls back to read-only checks until the admin secrets are configured.
+        run: |
+          if [ "${{ inputs.read_only }}" = "true" ] || [ -z "$PROD_ADMIN_EMAIL" ] || [ -z "$PROD_ADMIN_PASSWORD" ]; then
+            echo "::notice::Running read-only checks (no admin secrets or read_only requested)"
+            ./run-prod-e2e.sh --read-only
+          else
+            ./run-prod-e2e.sh
+          fi
         env:
           PROD_WEB_URL: ${{ vars.PROD_WEB_URL }}
           PROD_API_URL: ${{ vars.PROD_API_URL }}

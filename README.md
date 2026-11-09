@@ -10,7 +10,7 @@ Node.js, Express and MongoDB REST API for a MERN cafe ordering system. It covers
 |---|---|
 | **Live API (Render)** | https://cafe-order-api-xxed.onrender.com/api |
 | **Swagger docs** | https://cafe-order-api-xxed.onrender.com/api/docs |
-| **Live app (Vercel)** | _coming soon_ |
+| **Live app (Vercel)** | https://cafe-order-web.vercel.app |
 
 ## Features
 
