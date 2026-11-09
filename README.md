@@ -2,13 +2,15 @@
 
 Node.js, Express and MongoDB REST API for a MERN cafe ordering system. It covers menu management, ordering without login, order tracking with live status over Socket.io, admin auth (JWT) and sales stats from aggregation pipelines. Swagger docs are at **`/api/docs`**.
 
+> Free Render instance: the first request after it has been idle can take up to a minute.
+>
 > **Frontend (React):** [anildeveloper26/cafe-order-web](https://github.com/anildeveloper26/cafe-order-web)
 
 | | Link |
 |---|---|
-| **Live API (Render)** | `https://<your-api>.onrender.com/api` |
-| **Swagger docs** | `https://<your-api>.onrender.com/api/docs` |
-| **Live app (Vercel)** | `https://<your-app>.vercel.app` |
+| **Live API (Render)** | https://cafe-order-api-xxed.onrender.com/api |
+| **Swagger docs** | https://cafe-order-api-xxed.onrender.com/api/docs |
+| **Live app (Vercel)** | _coming soon_ |
 
 ## Features
 

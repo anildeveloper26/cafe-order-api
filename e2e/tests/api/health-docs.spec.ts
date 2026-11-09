@@ -41,4 +41,14 @@ test.describe('health & docs', () => {
     const res = await request.post('orders', { headers: { 'content-type': 'application/json' }, data: '{"bad json' });
     expect(res.status()).toBe(400);
   });
+
+  test('requests from a disallowed origin get 403, allowed origins get CORS headers', async ({ request }) => {
+    const blocked = await request.get('health', { headers: { Origin: 'https://evil.example' } });
+    expect(blocked.status()).toBe(403);
+    expect((await blocked.json()).message).toContain('not allowed');
+
+    const allowed = await request.get('health', { headers: { Origin: 'http://localhost:5175' } });
+    expect(allowed.status()).toBe(200);
+    expect(allowed.headers()['access-control-allow-origin']).toBe('http://localhost:5175');
+  });
 });
